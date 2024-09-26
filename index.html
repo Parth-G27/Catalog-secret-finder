@@ -5,103 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shamir's Secret Sharing</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f0f4f8;
+            background-color: #2e2e2e;
+            color: #f7f7f7;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            padding: 0;
+            padding: 20px;
         }
 
         .container {
-            background-color: #fff;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            padding: 60px;
-            max-width: 600px;
+            background-color: #393939;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .container:hover {
-            transform: translateY(-10px);
         }
 
         h1 {
-            color: #333;
-            font-size: 36px;
-            margin-bottom: 30px;
+            font-size: 26px;
+            color: #f39c12;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .file-upload-wrapper {
+            margin-bottom: 20px;
         }
 
         input[type="file"] {
             display: none;
         }
 
-        label {
-            background-color: #2196F3;
-            color: white;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 8px;
+        .file-upload {
+            background-color: #f39c12;
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s;
             display: inline-block;
-            margin-bottom: 30px;
         }
 
-        label:hover {
-            background-color: #1976D2;
+        .file-upload:hover {
+            background-color: #e67e22;
         }
 
         .output {
-            margin-top: 40px;
-            padding: 30px;
-            background-color: #f1f8e9;
-            border-radius: 12px;
-            font-size: 22px;
-            color: #333;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .output-card {
-            background-color: #e3f2fd;
-            border: 2px solid #2196F3;
-            border-radius: 12px;
+            margin-top: 30px;
             padding: 20px;
-            font-size: 24px;
-            color: #555;
-            margin-top: 20px;
+            background-color: #4a4a4a;
+            border-radius: 10px;
+            border: 1px solid #f39c12;
+            font-size: 18px;
+            color: #f7f7f7;
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        .output-card p {
-            margin: 0;
-            font-size: 22px;
+        .output.show {
+            opacity: 1;
         }
 
         footer {
-            margin-top: 50px;
-            font-size: 16px;
-            color: #888;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #b3b3b3;
         }
-
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Select a JSON File</h1>
+        <h1>Upload JSON File</h1>
 
-        <!-- Custom styled file input -->
-        <label for="fileInput">Choose File</label>
-        <input type="file" id="fileInput" />
+        <div class="file-upload-wrapper">
+            <!-- Custom file input trigger -->
+            <label for="fileInput" class="file-upload">Choose File</label>
+            <input type="file" id="fileInput" />
+        </div>
 
         <!-- Output container -->
-        <div class="output" id="output">Upload a JSON file to see the result.</div>
+        <div class="output" id="output">No file selected yet.</div>
 
-        <footer>Shamir's Secret Sharing Algorithm</footer>
+        <footer>Shamir's Secret Sharing</footer>
     </div>
 
     <script>
@@ -131,7 +133,8 @@
         function processFile(event) {
             const file = event.target.files[0];
             if (!file) {
-                document.getElementById('output').innerHTML = '<div class="output-card"><p>No file selected!</p></div>';
+                document.getElementById('output').innerText = 'No file selected!';
+                document.getElementById('output').classList.add('show');
                 return;
             }
 
@@ -162,10 +165,8 @@
                 const secret = lagrangeInterpolation(points, k);
 
                 // Display the result
-                document.getElementById('output').innerHTML = `
-                    <div class="output-card">
-                        <p>The constant term (secret 'c') is: <strong>${Math.round(secret)}</strong></p>
-                    </div>`;
+                document.getElementById('output').innerHTML = `The constant term (secret 'c') is: <strong>${Math.round(secret)}</strong>`;
+                document.getElementById('output').classList.add('show');
             };
 
             reader.readAsText(file);
