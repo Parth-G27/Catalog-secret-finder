@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shamir's Secret Sharing</title>
+    <title>Shamir's Secret Sharing - Two Files</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             padding: 20px;
         }
 
@@ -26,7 +26,7 @@
             background-color: #393939;
             border-radius: 15px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 600px;
             width: 100%;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
@@ -56,6 +56,7 @@
             cursor: pointer;
             transition: background-color 0.3s;
             display: inline-block;
+            margin: 0 10px;
         }
 
         .file-upload:hover {
@@ -63,7 +64,7 @@
         }
 
         .output {
-            margin-top: 30px;
+            margin-top: 20px;
             padding: 20px;
             background-color: #4a4a4a;
             border-radius: 10px;
@@ -72,6 +73,7 @@
             color: #f7f7f7;
             min-height: 60px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             opacity: 0;
@@ -80,6 +82,10 @@
 
         .output.show {
             opacity: 1;
+        }
+
+        .output-item {
+            margin: 10px 0;
         }
 
         footer {
@@ -92,27 +98,25 @@
 <body>
 
     <div class="container">
-        <h1>Upload JSON File</h1>
+        <h1>Upload Two JSON Files</h1>
 
         <div class="file-upload-wrapper">
-            <!-- Custom file input trigger -->
-            <label for="fileInput" class="file-upload">Choose File</label>
-            <input type="file" id="fileInput" />
+            <label for="fileInput1" class="file-upload">Choose File 1</label>
+            <input type="file" id="fileInput1" />
+            <label for="fileInput2" class="file-upload">Choose File 2</label>
+            <input type="file" id="fileInput2" />
         </div>
 
-        <!-- Output container -->
-        <div class="output" id="output">No file selected yet.</div>
+        <div class="output" id="output">No files selected yet.</div>
 
-        <footer>Shamir's Secret Sharing</footer>
+        <footer>Shamir's Secret Sharing - Two Files</footer>
     </div>
 
     <script>
-        // Function to decode a value from a given base to decimal
         function decodeValue(value, base) {
             return parseInt(value, base);
         }
 
-        // Lagrange interpolation to find the constant term (c) of the polynomial
         function lagrangeInterpolation(points, k) {
             let secret = 0;
 
@@ -129,51 +133,65 @@
             return secret;
         }
 
-        // Function to read and process the JSON file
-        function processFile(event) {
-            const file = event.target.files[0];
-            if (!file) {
-                document.getElementById('output').innerText = 'No file selected!';
-                document.getElementById('output').classList.add('show');
+        function processFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        const k = jsonData.keys.k;
+                        let points = [];
+                        for (let key in jsonData) {
+                            if (key !== 'keys') {
+                                const x = parseInt(key);
+                                const base = parseInt(jsonData[key].base);
+                                const encodedValue = jsonData[key].value;
+                                const y = decodeValue(encodedValue, base);
+                                points.push({ x, y });
+                            }
+                        }
+                        points.sort((a, b) => a.x - b.x);
+                        const secret = lagrangeInterpolation(points, k);
+                        resolve(Math.round(secret));
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        async function processFiles() {
+            const file1 = document.getElementById('fileInput1').files[0];
+            const file2 = document.getElementById('fileInput2').files[0];
+            const outputDiv = document.getElementById('output');
+
+            if (!file1 || !file2) {
+                outputDiv.innerText = 'Please select both files!';
+                outputDiv.classList.add('show');
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const jsonData = JSON.parse(e.target.result);
+            try {
+                const [result1, result2] = await Promise.all([
+                    processFile(file1),
+                    processFile(file2)
+                ]);
 
-                // Extract n and k
-                const n = jsonData.keys.n;  
-                const k = jsonData.keys.k;
-
-                // Decode the points
-                let points = [];
-                for (let key in jsonData) {
-                    if (key !== 'keys') {
-                        const x = parseInt(key);
-                        const base = parseInt(jsonData[key].base);
-                        const encodedValue = jsonData[key].value;
-                        const y = decodeValue(encodedValue, base);  // Decode y value
-                        points.push({ x, y });
-                    }
-                }
-
-                // Sort the points based on x value (just in case)
-                points.sort((a, b) => a.x - b.x);
-
-                // Apply Lagrange interpolation to find the constant term 'c'
-                const secret = lagrangeInterpolation(points, k);
-
-                // Display the result
-                document.getElementById('output').innerHTML = `The constant term (secret 'c') is: <strong>${Math.round(secret)}</strong>`;
-                document.getElementById('output').classList.add('show');
-            };
-
-            reader.readAsText(file);
+                outputDiv.innerHTML = `
+                    <div class="output-item">File 1 result: <strong>${result1}</strong></div>
+                    <div class="output-item">File 2 result: <strong>${result2}</strong></div>
+                `;
+                outputDiv.classList.add('show');
+            } catch (error) {
+                outputDiv.innerText = `Error processing files: ${error.message}`;
+                outputDiv.classList.add('show');
+            }
         }
 
-        // Event listener for file input change
-        document.getElementById('fileInput').addEventListener('change', processFile);
+        document.getElementById('fileInput1').addEventListener('change', processFiles);
+        document.getElementById('fileInput2').addEventListener('change', processFiles);
     </script>
 
 </body>
